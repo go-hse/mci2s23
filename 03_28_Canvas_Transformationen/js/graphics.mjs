@@ -36,10 +36,11 @@ export function initGraphics(user_callback) {
     const startTime = new Date();
 
     function mainloop() {
-        // console.log(new Date() - startTime);
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const deltaTime = new Date() - startTime;
         ctx.resetTransform();
-        user_callback(ctx);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        user_callback(ctx, deltaTime);
         window.requestAnimationFrame(mainloop);
     }
     mainloop();
