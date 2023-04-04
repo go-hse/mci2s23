@@ -13,7 +13,7 @@ export function initInteraction(ctx, interactiveObjects) {
             console.log(`start ${t.identifier} at ${t.pageX}, ${t.pageY}`);
             touches[t.identifier] = { x: t.pageX, y: t.pageY };
             for (let io of interactiveObjects) {
-                io.isInside(t.identifier, t.pageX, t.pageY);
+                io.isInside(ctx, t.identifier, t.pageX, t.pageY);
             }
         }
     });

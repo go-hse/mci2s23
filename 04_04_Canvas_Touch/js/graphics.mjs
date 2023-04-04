@@ -43,17 +43,24 @@ export function u_path() {
     return upath;
 }
 
-export function path(ctx, p, x, y, angle, sc = 1, fillStyle = "#fff", strokeStyle = "#000", lineWidth = 1) {
+export function path(ctx, p, x, y, angle,
+    sc = 10, fillStyle = "#f00", strokeStyle = "#f00", lineWidth = 0.1
+) {
     ctx.save();  // Sicherung der globalen Attribute
     ctx.translate(x, y);
     ctx.scale(sc, sc);
     ctx.rotate(angle);
+
+    let m = ctx.getTransform();
+
     ctx.fillStyle = fillStyle;
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = strokeStyle;
     ctx.fill(p);
     ctx.stroke(p);
     ctx.restore(); // Wiederherstellung der globalen Attribute
+
+    return m;
 }
 
 
