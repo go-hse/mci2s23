@@ -1,3 +1,12 @@
+import { initInteraction } from "./interaction.mjs";
+
+
+export function distance(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
 export function line(ctx, x1, y1, x2, y2, strokeStyle = "#fff", lineWidth = 1) {
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = strokeStyle;
@@ -20,9 +29,41 @@ export function circle(ctx, x, y, radius, fillStyle = "#fff", strokeStyle = "#00
     ctx.stroke();
 }
 
-export function initGraphics(user_callback) {
+export function u_path() {
+    let upath = new Path2D();
+    upath.moveTo(-2, -2);
+    upath.lineTo(-2, 2);
+    upath.lineTo(-1, 2);
+    upath.lineTo(-1, -1);
+    upath.lineTo(1, -1);
+    upath.lineTo(1, 2);
+    upath.lineTo(2, 2);
+    upath.lineTo(2, -2);
+    upath.closePath();
+    return upath;
+}
+
+export function path(ctx, p, x, y, angle, sc = 1, fillStyle = "#fff", strokeStyle = "#000", lineWidth = 1) {
+    ctx.save();  // Sicherung der globalen Attribute
+    ctx.translate(x, y);
+    ctx.scale(sc, sc);
+    ctx.rotate(angle);
+    ctx.fillStyle = fillStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = strokeStyle;
+    ctx.fill(p);
+    ctx.stroke(p);
+    ctx.restore(); // Wiederherstellung der globalen Attribute
+}
+
+
+
+export function initGraphics(drawcallback, interactiveObjects) {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
+
+    // forEachTouch ist Funktion, zurückgegeben aus initInteraction
+    let forEachTouchFunction = initInteraction(ctx, interactiveObjects);
 
     function resize() {
         canvas.width = window.innerWidth;
@@ -39,7 +80,15 @@ export function initGraphics(user_callback) {
         ctx.resetTransform();
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        user_callback(ctx, deltaTime);
+        drawcallback(ctx, deltaTime);
+        ctx.font = "20px Arial";
+
+        // Callback: anonyme Funktion, 3 Parameter
+        forEachTouchFunction((identifier, x, y) => {
+            circle(ctx, x, y, 30, "red");
+            ctx.fillStyle = "white";
+            ctx.fillText(`id: ${identifier}`, x + 40, y);
+        });
         window.requestAnimationFrame(mainloop);
     }
     mainloop();
