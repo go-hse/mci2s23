@@ -1,7 +1,5 @@
 export function initInteraction(ctx, interactiveObjects) {
-
     const canvas = ctx.canvas;
-
     let touches = {};
 
     // Event-Handling
