@@ -14,7 +14,7 @@ export function initInteraction(ctx, interactiveObjects) {
                 io.isInside(ctx, t.identifier, t.pageX, t.pageY);
             }
         }
-    });
+    }, { passive: false });
 
     canvas.addEventListener("touchmove", (evt) => {
         evt.preventDefault();
@@ -22,11 +22,10 @@ export function initInteraction(ctx, interactiveObjects) {
             // console.log(`move ${t.identifier} at ${t.pageX}, ${t.pageY}`);
             touches[t.identifier] = { x: t.pageX, y: t.pageY };
             for (let io of interactiveObjects) {
-                io.move(ctx, t.identifier, t.pageX, t.pageY);
+                io.move(t.identifier, t.pageX, t.pageY);
             }
-
         }
-    });
+    }, { passive: false });
 
     canvas.addEventListener("touchend", (evt) => {
         evt.preventDefault();
@@ -37,7 +36,7 @@ export function initInteraction(ctx, interactiveObjects) {
                 io.reset(t.identifier);
             }
         }
-    });
+    }, { passive: false });
 
     // cb (übergebene Funktion): Aufruf für jeden Touch-Punkt 
     return (cb) => {

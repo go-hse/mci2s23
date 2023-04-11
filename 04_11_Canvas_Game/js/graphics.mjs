@@ -65,7 +65,7 @@ export function path(ctx, p, x, y, angle,
 
 
 
-export function initGraphics(drawcallback, interactiveObjects) {
+export function initGraphics(interactiveObjects) {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -76,29 +76,38 @@ export function initGraphics(drawcallback, interactiveObjects) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         console.log(`resize ${ctx.canvas.width}x${ctx.canvas.height}`);
+        for (let io of interactiveObjects) {
+            io.resize(ctx);
+        }
+
     }
     window.addEventListener("resize", resize);
     resize();
 
-    const startTime = new Date();
+    let lastTime = new Date();
+    let drawcallback = () => { };
+    function setDrawCallback(cb) {
+        drawcallback = cb;
+    }
 
     function mainloop() {
-        const deltaTime = new Date() - startTime;
+        const now = new Date();
         ctx.resetTransform();
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-        drawcallback(ctx, deltaTime);
+        drawcallback(ctx, now - lastTime);
         ctx.font = "20px Arial";
 
         // Callback: anonyme Funktion, 3 Parameter
         forEachTouchFunction((identifier, x, y) => {
-            circle(ctx, x, y, 5, "red");
+            circle(ctx, x, y, 10, "red");
             ctx.fillStyle = "white";
             ctx.fillText(`id: ${identifier}`, x + 40, y);
         });
         window.requestAnimationFrame(mainloop);
+        lastTime = now;
     }
-    mainloop();
+    return { ctx, mainloop, setDrawCallback };
 }
 
 
