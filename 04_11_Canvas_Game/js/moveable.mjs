@@ -26,21 +26,25 @@ export function Moveable(ctx, x, y, vx, vy, radius = 10, mass = 1, id = "", colo
 
         --collideCounter;
         if (collideCounter < 0) {
-            vx *= 0.98;
-            vy *= 0.98;
+            vx *= 0.95;
+            vy *= 0.95;
         }
 
     }
 
     function move(s, r) {
-        speed = s;
-        rotation = r;
+        if (collideCounter < 1) {
+            speed = s;
+            rotation = r;
+        } else {
+            speed = 0;
+        }
     }
 
     function setVelocity(nvx, nvy) {
         vx = nvx;
         vy = nvy;
-        collideCounter = 10;
+        collideCounter = 100;
     }
 
     function coords() {
@@ -63,7 +67,8 @@ export function Moveable(ctx, x, y, vx, vy, radius = 10, mass = 1, id = "", colo
         ctx.fillStyle = color;
         G.circle(ctx, 0, 0, radius, color);
         ctx.strokeStyle = "white";
-        if (alpha !== 0) G.line(ctx, 0, 0, radius * 1.2, 0, "white", 2);
+        let linecolor = collideCounter < 1 ? "white" : "red";
+        if (alpha !== 0) G.line(ctx, 0, 0, radius * 1.2, 0, linecolor, 2);
         // ctx.fillStyle = "white";
         // ctx.fillText(id, 0, -5);
         ctx.restore();
@@ -83,8 +88,9 @@ export function Moveables(ctx, number) {
     const height = ctx.canvas.height;
     const border = width < height ? width / 5 : height / 5;
 
-    while (objects.length < number) {
-        const radius = border / 5 + Math.random() * border / 3;
+    let errorCounter = 0;
+    while (objects.length < number && errorCounter < 1000) {
+        const radius = border / 3 + Math.random() * border / 3;
         const x = border + Math.random() * (width - 2 * border);
         const y = border + Math.random() * (height - 2 * border);
 
@@ -92,6 +98,9 @@ export function Moveables(ctx, number) {
             const vx = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
             const vy = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
             objects.push(Moveable(ctx, x, y, vx, vy, radius, radius / 40, `id: ${objects.length}`));
+            errorCounter = 0;
+        } else {
+            ++errorCounter;
         }
     }
 
@@ -130,6 +139,7 @@ export function Moveables(ctx, number) {
                     const vo = o.velocity();
                     const vRelativeVelocity = { x: vo.vx - vi.vx, y: vo.vy - vi.vy };
                     const speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+                    if (speed < 0) continue;
                     const impulse = 2 * speed / (i.mass + o.mass);
                     i.setVelocity(vi.vx + (impulse * o.mass * vCollisionNorm.x), vi.vy + (impulse * o.mass * vCollisionNorm.y))
                     o.setVelocity(vo.vx - (impulse * i.mass * vCollisionNorm.x), vo.vy - (impulse * i.mass * vCollisionNorm.y))

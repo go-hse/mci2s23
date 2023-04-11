@@ -14,12 +14,10 @@ window.onload = function () {
     const ship = Moveable(graphics.ctx, 50, 50, 0, 0, 10, 3, "ship", "red");
     ctrl.setMoveable(ship);
 
-    const moveables = Moveables(graphics.ctx, 15);
+    const moveables = Moveables(graphics.ctx, 25);
     moveables.addMoveable(ship);
 
     function draw(ctx, deltaTime) {
-
-
         moveables.update(deltaTime / 10);
         moveables.draw();
         for (let io of interactiveObjects) {
