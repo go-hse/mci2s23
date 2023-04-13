@@ -1,17 +1,25 @@
 import * as G from "./graphics.mjs";
 
-
-export function Moveable(ctx, x, y, vx, vy, radius = 10, mass = 1, id = "", color = "gray") {
-    let alpha = 0, rotation = 0, speed = 0;
+export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", color = "gray", interactive = false) {
+    let alpha = 0, towards = 0, rotation = 0, speed = 0;
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
     let lastTime = 0;
     let collideCounter = 0;
+    let imgDrawFunc;
+
+    function setImage(src, radius = 1) {
+        imgDrawFunc = G.image(ctx, src, radius)
+    }
 
     function update(t) {
         lastTime = t;
+
+        rotation = G.delta(towards, alpha) / 30;
+
+        alpha += rotation;
+
         if (speed > 0) {
-            alpha += rotation;
             vx = speed * Math.cos(alpha);
             vy = speed * Math.sin(alpha);
         }
@@ -25,36 +33,39 @@ export function Moveable(ctx, x, y, vx, vy, radius = 10, mass = 1, id = "", colo
         y += vy * t;
 
         --collideCounter;
-        if (collideCounter < 0) {
-            vx *= 0.95;
-            vy *= 0.95;
-        }
 
+        if (interactive === true && collideCounter < 0 || interactive === false) {
+            vx *= 0.9;
+            vy *= 0.9;
+        }
     }
 
-    function move(s, r) {
-        if (collideCounter < 1) {
+    function move(s, nalpha) {
+        if (collideCounter < 1 && nalpha !== undefined) {
             speed = s;
-            rotation = r;
+            towards = nalpha;
         } else {
-            speed = 0;
+            speed = s;
+            rotation = 0;
+            towards = alpha;
         }
+    }
+
+    function setHit(cc = 10) {
+        collideCounter = cc;
     }
 
     function setVelocity(nvx, nvy) {
         vx = nvx;
         vy = nvy;
-        collideCounter = 100;
+        alpha = Math.atan2(vy, vx);
+
+        setHit(20);
     }
 
-    function coords() {
-        return { x, y };
+    function getState() {
+        return { x, y, alpha, radius, collideCounter, interactive };
     }
-
-    function ncoords() {
-        return { x: x + vx * lastTime, y: y + vy * lastTime };
-    }
-
 
     function velocity() {
         return { vx, vy };
@@ -63,25 +74,28 @@ export function Moveable(ctx, x, y, vx, vy, radius = 10, mass = 1, id = "", colo
     function draw() {
         ctx.save();
         ctx.translate(x, y);
-        if (alpha !== 0) ctx.rotate(alpha);
+        if (interactive) ctx.rotate(alpha);
         ctx.fillStyle = color;
         G.circle(ctx, 0, 0, radius, color);
+        if (imgDrawFunc) imgDrawFunc(0, 0, 0);
         ctx.strokeStyle = "white";
-        let linecolor = collideCounter < 1 ? "white" : "red";
-        if (alpha !== 0) G.line(ctx, 0, 0, radius * 1.2, 0, linecolor, 2);
+        if (interactive && collideCounter < 1) {
+            G.line(ctx, 0, 0, radius * 1.2, 0, "white", 2);
+            ctx.translate(radius, 0);
+            G.curve(ctx, speed, rotation, "orange", 2);
+        }
         // ctx.fillStyle = "white";
         // ctx.fillText(id, 0, -5);
         ctx.restore();
     }
 
-    return { update, draw, move, setVelocity, radius, id, coords, ncoords, velocity, mass };
+    return { update, draw, move, setVelocity, radius, id, getState, velocity, mass, setHit, setImage };
 }
 
 const MAX_SPEED = 0.1;
 const MAX_SPEED_HALF = MAX_SPEED / 2;
 
 export function Moveables(ctx, number) {
-
     let objects = [];
 
     const width = ctx.canvas.width;
@@ -91,13 +105,14 @@ export function Moveables(ctx, number) {
     let errorCounter = 0;
     while (objects.length < number && errorCounter < 1000) {
         const radius = border / 3 + Math.random() * border / 3;
-        const x = border + Math.random() * (width - 2 * border);
+        const x = radius + Math.random() * (width - border);
         const y = border + Math.random() * (height - 2 * border);
 
         if (isInside(x, y, radius) === false) {
             const vx = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
             const vy = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
-            objects.push(Moveable(ctx, x, y, vx, vy, radius, radius / 40, `id: ${objects.length}`));
+            const mass = radius / 10;
+            objects.push(Moveable(ctx, x, y, vx, vy, radius, mass, `id: ${objects.length}`, "black"));
             errorCounter = 0;
         } else {
             ++errorCounter;
@@ -108,9 +123,16 @@ export function Moveables(ctx, number) {
         objects.push(m);
     }
 
+    function forMoveable(cb) {
+        for (let o of objects) {
+            if (cb(o)) return true;
+        }
+        return false;
+    }
+
     function isInside(x, y, radius) {
         for (let o of objects) {
-            const co = o.coords();
+            const co = o.getState();
             const d = G.distance(x, y, co.x, co.y);
             if (d * 0.8 < radius + o.radius) return true;
         }
@@ -119,18 +141,18 @@ export function Moveables(ctx, number) {
 
     function draw() {
         ctx.font = "20px Arial";
-
         for (let o of objects) {
             o.draw();
         }
     }
 
+    // https://spicyyoghurt.com/tutorials/html5-javascript-game-development/collision-detection-physics
     function update(t) {
         for (let o of objects) {
             for (let i of objects) {
                 if (i === o) continue;
-                const ci = i.coords();
-                const co = o.coords();
+                const ci = i.getState();
+                const co = o.getState();
                 const d = G.distance(ci.x, ci.y, co.x, co.y);
                 if (d < i.radius + o.radius) {
                     const vCollision = { x: ci.x - co.x, y: ci.y - co.y };
@@ -140,7 +162,7 @@ export function Moveables(ctx, number) {
                     const vRelativeVelocity = { x: vo.vx - vi.vx, y: vo.vy - vi.vy };
                     const speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
                     if (speed < 0) continue;
-                    const impulse = 2 * speed / (i.mass + o.mass);
+                    const impulse = speed / (i.mass + o.mass);
                     i.setVelocity(vi.vx + (impulse * o.mass * vCollisionNorm.x), vi.vy + (impulse * o.mass * vCollisionNorm.y))
                     o.setVelocity(vo.vx - (impulse * i.mass * vCollisionNorm.x), vo.vy - (impulse * i.mass * vCollisionNorm.y))
                 };
@@ -150,7 +172,7 @@ export function Moveables(ctx, number) {
     }
 
 
-    return { draw, update, addMoveable };
+    return { draw, update, addMoveable, forMoveable };
 }
 
 
