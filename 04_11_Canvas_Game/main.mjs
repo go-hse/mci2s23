@@ -1,7 +1,7 @@
 // import { initGraphics } from "./js/graphics.mjs";
 import * as G from "./js/graphics.mjs";
 import { Moveables } from "./js/moveable.mjs";
-import { Shots, Player } from "./js/gameplay.mjs";
+import { Shots, Player, Logic } from "./js/gameplay.mjs";
 
 window.onload = function () {
     const graphics = G.initGraphics();
@@ -23,8 +23,11 @@ window.onload = function () {
     }));
 
     shots.setMoveables(moveables);
+    const logic = Logic();
+
 
     function draw(ctx, deltaTime) {
+        logic.update();
         for (let p of players) {
             p.draw(ctx);
         }
@@ -32,6 +35,7 @@ window.onload = function () {
         moveables.update(deltaTime / 10);
         moveables.draw();
         shots.draw();
+        logic.draw(ctx);
     }
     graphics.setDrawCallback(draw);
     graphics.mainloop();

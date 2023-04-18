@@ -1,6 +1,7 @@
 import * as G from "./graphics.mjs";
 import { controller } from "./controller.mjs";
 import { Moveable } from "./moveable.mjs";
+import { GameObjects } from "./gameobjects.mjs";
 
 const SHOT_SPEED = 4;
 
@@ -9,6 +10,7 @@ function Shot(ctx, x, y, alpha, myPlayerID) {
     const dy = SHOT_SPEED * Math.sin(alpha);
     let isDone = false;
 
+    console.log("shot", myPlayerID);
     const width = ctx.canvas.width;
     const height = ctx.canvas.height;
 
@@ -81,13 +83,15 @@ export function Shots(ctx) {
     return { add, update, draw, addPlayer, setMoveables };
 }
 
-export function Ship(ctx, x, y, color, shots, src, insideCB) {
+export function Ship(ctx, x, y, playerID, color, shots, src, insideCB) {
+    let hasFlag = false;
     let that = Moveable(ctx, x, y, 0, 0, 15, 3, "ship", color, true);
     that.insideCB = insideCB;
-    that.playerID = color;
+    that.playerID = playerID;
 
     const baseHit = that.setHit;
     const baseDraw = that.draw;
+    const baseState = that.getState;
 
     const imgDraw = G.image(ctx, src, 30);
 
@@ -99,14 +103,28 @@ export function Ship(ctx, x, y, color, shots, src, insideCB) {
 
     that.draw = function () {
         let { x, y, alpha } = that.getState();
+        if (hasFlag) {
+            that.setColor("orange");
+        } else {
+            that.setColor(color);
+        }
         baseDraw();
         imgDraw(x, y, alpha);
     }
 
+    that.setFlag = function (b) {
+        hasFlag = b;
+    }
+
+    that.getState = function () {
+        let state = baseState();
+        state.hasFlag = hasFlag;
+        return state;
+    }
 
     that.setHit = function () {
-        baseHit(40);
-        console.log(`${that.playerID} is hit`);
+        baseHit(100);
+        hasFlag = false;
     }
 
     shots.addPlayer(that);
@@ -116,18 +134,76 @@ export function Ship(ctx, x, y, color, shots, src, insideCB) {
 export function Player(graphics, moveables, shots, options) {
     const x = options.x;
     const y = options.y;
+    const playerID = GameObjects.add({ isInside, getState, setFlag }, "player");
 
     const ctrl = controller();
-    const ship = Ship(graphics.ctx, x, y, options.color, shots, options.imgsrc, options.callback);
+    const ship = Ship(graphics.ctx, x, y, `player ${playerID}`, options.color, shots, options.imgsrc, options.callback);
     ctrl.setMoveable(ship);
     moveables.addMoveable(ship);
-
     graphics.addIO(ctrl);
 
+
+    const baseRadius = 30;
     function draw(ctx) {
-        G.circle(ctx, x, y, 30, options.color);
+        G.circle(ctx, x, y, baseRadius, options.color);
+    }
+
+    function isInside(ex, ey) {
+        return G.distance(x, y, ex, ey) < baseRadius;
+    }
+
+    function getState() {
+        return ship.getState();
+    }
+
+    function setFlag(b) {
+        ship.setFlag(b);
     }
 
     return { draw };
 
+}
+
+export function Logic() {
+    const players = GameObjects.all("player");
+    const p1 = players[0];
+    const p2 = players[1];
+
+    let p1score = 0, p2score = 0;
+
+    function update() {
+        {
+            let { x, y, hasFlag } = p1.getState();
+            let insideBase = p2.isInside(x, y);
+            if (insideBase) {
+                p1.setFlag(true);
+            }
+
+            insideBase = p1.isInside(x, y);
+            if (insideBase && hasFlag) {
+                ++p1score;
+                p1.setFlag(false);
+            }
+        }
+        {
+            let { x, y, hasFlag } = p2.getState();
+            let insideBase = p1.isInside(x, y);
+            if (insideBase) {
+                p2.setFlag(true);
+            }
+            insideBase = p2.isInside(x, y);
+            if (insideBase && hasFlag) {
+                ++p2score;
+                p2.setFlag(false);
+            }
+        }
+    }
+
+    function draw(ctx) {
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText(`${p1score}:${p2score}`, 20, 40);
+    }
+
+    return { update, draw };
 }

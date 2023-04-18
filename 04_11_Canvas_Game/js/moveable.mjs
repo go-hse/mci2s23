@@ -55,6 +55,10 @@ export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", colo
         collideCounter = cc;
     }
 
+    function setColor(c) {
+        color = c;
+    }
+
     function setVelocity(nvx, nvy) {
         vx = nvx;
         vy = nvy;
@@ -76,7 +80,12 @@ export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", colo
         ctx.translate(x, y);
         if (interactive) ctx.rotate(alpha);
         ctx.fillStyle = color;
-        G.circle(ctx, 0, 0, radius, color);
+        if (interactive && collideCounter < 1 || interactive === false) {
+            G.circle(ctx, 0, 0, radius, color);
+        }
+        if (interactive && collideCounter > 0) {
+            G.circle(ctx, 0, 0, radius, "gray");
+        }
         if (imgDrawFunc) imgDrawFunc(0, 0, 0);
         ctx.strokeStyle = "white";
         if (interactive && collideCounter < 1) {
@@ -89,7 +98,7 @@ export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", colo
         ctx.restore();
     }
 
-    return { update, draw, move, setVelocity, radius, id, getState, velocity, mass, setHit, setImage };
+    return { update, draw, move, setVelocity, radius, id, getState, velocity, mass, setHit, setColor, setImage };
 }
 
 const MAX_SPEED = 0.1;
