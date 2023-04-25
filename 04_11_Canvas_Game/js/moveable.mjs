@@ -34,24 +34,22 @@ export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", colo
 
         --collideCounter;
 
-        if (interactive === true && collideCounter < 0 || interactive === false) {
-            vx *= 0.9;
-            vy *= 0.9;
-        }
+        vx *= 0.9;
+        vy *= 0.9;
     }
 
     function move(s, nalpha) {
         if (collideCounter < 1 && nalpha !== undefined) {
-            speed = s;
+            speed = s / 5;
             towards = nalpha;
         } else {
-            speed = s;
+            speed = 0.2;
             rotation = 0;
             towards = alpha;
         }
     }
 
-    function setHit(cc = 10) {
+    function setHit(cc = 3) {
         collideCounter = cc;
     }
 
@@ -63,8 +61,7 @@ export function Moveable(ctx, x, y, vx, vy, radius = 15, mass = 1, id = "", colo
         vx = nvx;
         vy = nvy;
         alpha = Math.atan2(vy, vx);
-
-        setHit(20);
+        setHit();
     }
 
     function getState() {
@@ -120,7 +117,7 @@ export function Moveables(ctx, number) {
         if (isInside(x, y, radius) === false) {
             const vx = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
             const vy = MAX_SPEED_HALF - Math.random() * MAX_SPEED;
-            const mass = radius / 10;
+            const mass = radius / 40;
             objects.push(Moveable(ctx, x, y, vx, vy, radius, mass, `id: ${objects.length}`, "black"));
             errorCounter = 0;
         } else {

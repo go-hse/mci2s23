@@ -12,13 +12,13 @@ window.onload = function () {
 
     players.push(Player(graphics, moveables, shots, {
         x: 20, y: graphics.ctx.canvas.height - 20, color: "red", imgsrc: "./img/ship_64_r.png", callback: (ctx, ti, tx, ty) => {
-            return ty < ctx.canvas.height * 0.5;
+            return ty > ctx.canvas.height * 0.5;
         }
     }));
 
     players.push(Player(graphics, moveables, shots, {
         x: graphics.ctx.canvas.width - 20, y: 20, color: "green", imgsrc: "./img/ship_64_g.png", callback: (ctx, ti, tx, ty) => {
-            return ty > ctx.canvas.height * 0.5;
+            return ty < ctx.canvas.height * 0.5;
         }
     }));
 
@@ -28,6 +28,7 @@ window.onload = function () {
 
     function draw(ctx, deltaTime) {
         logic.update();
+        logic.back(ctx);
         for (let p of players) {
             p.draw(ctx);
         }

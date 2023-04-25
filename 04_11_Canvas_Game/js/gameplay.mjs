@@ -85,7 +85,9 @@ export function Shots(ctx) {
 
 export function Ship(ctx, x, y, playerID, color, shots, src, insideCB) {
     let hasFlag = false;
-    let that = Moveable(ctx, x, y, 0, 0, 15, 3, "ship", color, true);
+    const radius = 15;
+    const mass = 5;
+    let that = Moveable(ctx, x, y, 0, 0, radius, mass, "ship", color, true);
     that.insideCB = insideCB;
     that.playerID = playerID;
 
@@ -134,7 +136,7 @@ export function Ship(ctx, x, y, playerID, color, shots, src, insideCB) {
 export function Player(graphics, moveables, shots, options) {
     const x = options.x;
     const y = options.y;
-    const playerID = GameObjects.add({ isInside, getState, setFlag }, "player");
+    const playerID = GameObjects.add({ isInside, getState, setFlag, color: options.color }, "player");
 
     const ctrl = controller();
     const ship = Ship(graphics.ctx, x, y, `player ${playerID}`, options.color, shots, options.imgsrc, options.callback);
@@ -199,11 +201,26 @@ export function Logic() {
         }
     }
 
-    function draw(ctx) {
+    function back(ctx) {
         ctx.font = "20px Arial";
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = p1.color;
+        ctx.fillRect(0, ctx.canvas.height / 2, ctx.canvas.width, ctx.canvas.height);
+        ctx.fillStyle = p2.color;
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height / 2);
+        ctx.globalAlpha = 1;
+    }
+
+    function draw(ctx) {
+        ctx.fillStyle = p1.color;
+        ctx.fillRect(10, 30, 10, 10);
+        ctx.fillStyle = p2.color;
+        ctx.fillRect(48, 30, 10, 10);
+
         ctx.fillStyle = "white";
         ctx.fillText(`${p1score}:${p2score}`, 20, 40);
     }
 
-    return { update, draw };
+
+    return { update, draw, back };
 }
