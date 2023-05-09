@@ -18,14 +18,12 @@ function randomMaterial() {
     });
 }
 
-
 function add(i, parent, x = 0, y = 0, z = 0) {
     let object = new THREE.Mesh(geometries[i], randomMaterial());
     object.position.set(x, y, z);
     parent.add(object);
     return object;
 }
-
 
 
 window.onload = function () {
@@ -42,9 +40,54 @@ window.onload = function () {
     // 
 
     let cursor = add(1, scene);
+    let mousebuttons = [false, false, false, false, false];
 
+    const movescale = 0.002;
     // event listener
+    function onMouseMove(ev) {
+        const dx = ev.movementX * movescale;
+        const dy = ev.movementY * movescale;
+
+        const rot = ev.ctrlKey;
+
+        if (!rot && mousebuttons[0]) {
+            cursor.position.x += dx;
+            cursor.position.y -= dy;
+        }
+
+        if (rot && mousebuttons[0]) {
+            cursor.rotation.z += dx;
+            cursor.rotation.x += dy;
+        }
+
+
+        if (mousebuttons[2]) {
+            cursor.position.x += dx;
+            cursor.position.z += dy;
+        }
+
+        // console.log(mousebuttons);
+    }
+
+    function onMouseDown(ev) {
+        ev.preventDefault();
+        mousebuttons[ev.button] = true;
+    }
+
+    function onMouseUp(ev) {
+        ev.preventDefault();
+        mousebuttons[ev.button] = false;
+    }
+
     document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("contextmenu", ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        return false;
+    }, false);
+
 
 
 
