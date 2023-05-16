@@ -1,7 +1,6 @@
 import * as THREE from '../99_Lib/three.module.min.js';
 import { mousecursor } from './mousecursor.mjs';
-import { keyboard } from './keyboard.mjs';
-import { createLine } from './ray.mjs';
+import { Ray } from './ray.mjs';
 
 console.log("ThreeJs " + THREE.REVISION);
 
@@ -25,6 +24,8 @@ function randomMaterial() {
 function add(i, parent, x = 0, y = 0, z = 0) {
     let object = new THREE.Mesh(geometries[i], randomMaterial());
     object.position.set(x, y, z);
+    object.updateMatrix();
+    object.matrixAutoUpdate = false;
     parent.add(object);
     return object;
 }
@@ -46,13 +47,13 @@ window.onload = function () {
     let cursor = add(1, scene);
     mousecursor(cursor);
 
-    keyboard(" ", (state) => {
-        console.log("space", state);
-    });
+    let objects = [];
+    let x = -0.5, y = 0, z = 0, delta = 0.3;
+    for (let i = 0; i < 5; ++i) {
+        objects.push(add(i, scene, x, y, z)); x += delta;
+    }
 
-    const lineFunc = createLine(scene);
-    lineFunc(0, { x: -0.5, y: 1, z: 0 });
-    lineFunc(1, { x: 0.5, y: -1, z: 0 });
+    let ray = Ray(scene, cursor, objects);
 
     let renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -62,6 +63,7 @@ window.onload = function () {
     document.body.appendChild(renderer.domElement);
 
     function render() {
+        ray.updateRay();
         renderer.render(scene, camera);
     }
     renderer.setAnimationLoop(render);
