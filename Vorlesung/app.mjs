@@ -1,6 +1,7 @@
 import * as THREE from '../99_Lib/three.module.min.js';
 import { mousecursor } from './mousecursor.mjs';
 import { keyboard } from './keyboard.mjs';
+import { createLine } from './ray.mjs';
 
 console.log("ThreeJs " + THREE.REVISION);
 
@@ -49,10 +50,9 @@ window.onload = function () {
         console.log("space", state);
     });
 
-    keyboard("F3", (state) => {
-        console.log("F3", state);
-    });
-
+    const lineFunc = createLine(scene);
+    lineFunc(0, { x: -0.5, y: 1, z: 0 });
+    lineFunc(1, { x: 0.5, y: -1, z: 0 });
 
     let renderer = new THREE.WebGLRenderer({
         antialias: true,
