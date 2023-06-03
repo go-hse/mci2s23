@@ -8,11 +8,10 @@
     "workbench.colorTheme": "Visual Studio Light",
     "liveServer.settings.donotShowInfoMsg": true,
     "window.zoomLevel": 2,
-    "git.path": "C:\\Tools\\Git\\bin\\git.exe",
     "git.autofetch": true,
     "git.confirmSync": false,
     "explorer.confirmDelete": false,
-    "liveServer.settings.useLocalIp": true,
+    "liveServer.settings.useLocalIp": false,
     "liveServer.settings.ChromeDebuggingAttachment": false,
     "javascript.updateImportsOnFileMove.enabled": "always",
     "extensions.ignoreRecommendations": true,
@@ -22,4 +21,5 @@
         "**/*.sass",
         "**/*.ts"
     ],
+    "liveServer.settings.port": 8080
 }
