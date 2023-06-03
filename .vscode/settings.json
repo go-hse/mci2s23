@@ -1,13 +1,13 @@
 {
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "workbench.tree.indent": 40,
+    "workbench.tree.indent": 30,
     "workbench.colorCustomizations": {
-        "tree.indentGuidesStroke": "#fff"
+        "tree.indentGuidesStroke": "#0f0"
     },
-    "workbench.colorTheme": "Visual Studio Light",
+    // "workbench.colorTheme": "Visual Studio Light",
     "liveServer.settings.donotShowInfoMsg": true,
-    "window.zoomLevel": 2,
+    "window.zoomLevel": 1,
     "git.autofetch": true,
     "git.confirmSync": false,
     "explorer.confirmDelete": false,
