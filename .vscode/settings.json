@@ -5,22 +5,15 @@
     "workbench.colorCustomizations": {
         "tree.indentGuidesStroke": "#fff"
     },
-    "workbench.colorTheme": "Visual Studio Dark",
+    "workbench.colorTheme": "Visual Studio Light",
     "liveServer.settings.donotShowInfoMsg": true,
-    "window.zoomLevel": 1,
+    "window.zoomLevel": 2,
     "git.path": "C:\\Tools\\Git\\bin\\git.exe",
     "git.autofetch": true,
     "git.confirmSync": false,
     "explorer.confirmDelete": false,
     "liveServer.settings.useLocalIp": true,
     "liveServer.settings.ChromeDebuggingAttachment": false,
-    "liveServer.settings.port": 8443,
-    "liveServer.settings.https": {
-        "enable": true,
-        "cert": "C:\\Users\\adr\\Downloads\\certs\\MCI2.crt",
-        "key": "C:\\Users\\adr\\Downloads\\certs\\MCI2.key",
-        "passphrase": ""
-    },
     "javascript.updateImportsOnFileMove.enabled": "always",
     "extensions.ignoreRecommendations": true,
     "liveServer.settings.ignoreFiles": [
