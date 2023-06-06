@@ -27,7 +27,11 @@ z.B. mit scrcpy https://github.com/Genymobile/scrcpy
 
 * im Terminal, wenn 1 Gerät angezeigt wird. Verbindet VS-Code-Web-Server auf Port 8080 s.o. mit Quest:
 
+## adb reverse REMOTE LOCAL
+## REMOTE: Quest; LOCAL: PC
+
 # adb reverse tcp:3000 tcp:8080
+
 
 3. im Quest-Browser:
 
