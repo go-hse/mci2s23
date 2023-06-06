@@ -5,7 +5,8 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { mousecursor } from './mousecursor.mjs';
 import { Ray } from './ray.mjs';
 
-console.log("ThreeJs with VR ", THREE.REVISION, new Date());
+console.log("ThreeJs mit VR Vorlesung", THREE.REVISION, new Date());
+
 
 let geometries = [
     new THREE.BoxGeometry(0.25, 0.25, 0.25),
@@ -49,12 +50,18 @@ window.onload = function () {
     let cursor = add(1, scene);
     mousecursor(cursor);
 
-    let objects = [];
-    let x = -0.5, y = 1, z = -1, delta = 0.3;
-    for (let i = 0; i < 5; ++i) {
-        objects.push(add(i, scene, x, y, z)); x += delta;
-    }
+    let world = new THREE.Group();
+    world.matrixAutoUpdate = false;
+    world.rotation.y = Math.PI;
+    world.position.z = -1;
+    world.updateMatrix();
+    scene.add(world);
 
+    let objects = [];
+    let x = -0.5, y = 0, z = 0, delta = 0.3;
+    for (let i = 0; i < 5; ++i) {
+        objects.push(add(i, world, x, y, z)); x += delta;
+    }
 
     let renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -68,7 +75,7 @@ window.onload = function () {
     document.body.appendChild(renderer.domElement);
     document.body.appendChild(VRButton.createButton(renderer));
 
-    let ray = Ray(renderer, scene, cursor, objects);
+    let ray = Ray(renderer, scene, world, cursor, objects);
 
     function render() {
         ray.updateRay();

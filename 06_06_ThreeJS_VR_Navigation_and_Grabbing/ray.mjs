@@ -2,7 +2,6 @@ import * as THREE from '../99_Lib/three.module.min.js';
 import { keyboard } from './keyboard.mjs';
 import { createVRcontrollers } from './vr.mjs';
 
-
 export function createLine(scene) {
     const material = new THREE.LineBasicMaterial({ color: 0xffffff });
     const points = [];
@@ -24,7 +23,7 @@ export function createLine(scene) {
     }
 }
 
-export function Ray(renderer, scene, cursor, objects) {
+export function Ray(renderer, scene, world, cursor, objects) {
 
     let position = new THREE.Vector3();
     let rotation = new THREE.Quaternion();
@@ -34,12 +33,16 @@ export function Ray(renderer, scene, cursor, objects) {
 
     const raycaster = new THREE.Raycaster();
 
-    let grabbed = false;
+    let grabbed = false, squeezed = false;
     keyboard(" ", (state) => {
         console.log("grabbed", state);
         grabbed = state;
     });
 
+    keyboard("s", (state) => {
+        console.log("squeezed", state);
+        squeezed = state;
+    });
 
     let last_active_controller, last_active_inputsource;
     let { controller1, controller2 } = createVRcontrollers(scene, renderer, (current, src) => {
@@ -54,13 +57,20 @@ export function Ray(renderer, scene, cursor, objects) {
 
 
     const lineFunc = createLine(scene);
+    const flySpeedRotationFactor = 0.01;
+    const flySpeedTranslationFactor = -0.02;
 
-    let initialGrabbed, grabbedObject, hitObject, distance;
+
+    let initialGrabbed, grabbedObject, hitObject, distance, inverseHand, inverseWorld;
+    let differenceMatrix = new THREE.Matrix4();
+
+    let deltaFlyRotation = new THREE.Quaternion();
 
     function updateRay() {
         if (last_active_controller) {
             cursor.matrix.copy(last_active_controller.matrix);
             grabbed = controller1.controller.userData.isSelecting || controller2.controller.userData.isSelecting;
+            squeezed = controller1.controller.userData.isSqueezeing || controller2.controller.userData.isSqueezeing;
             direction.set(0, 0, -1);
         } else {
             cursor.updateMatrix();
@@ -96,13 +106,35 @@ export function Ray(renderer, scene, cursor, objects) {
             if (grabbedObject) {
                 endRay.addVectors(position, direction.multiplyScalar(distance));
                 lineFunc(1, endRay);
-                grabbedObject.matrix.copy(cursor.matrix.clone().multiply(initialGrabbed));
+                // grabbedObject.matrix.copy(cursor.matrix.clone().multiply(initialGrabbed));
+                grabbedObject.matrix.copy(inverseWorld.clone().multiply(cursor.matrix).multiply(initialGrabbed));
+
             } else if (hitObject) {
                 grabbedObject = hitObject;
-                initialGrabbed = cursor.matrix.clone().invert().multiply(grabbedObject.matrix);
+                // initialGrabbed = cursor.matrix.clone().invert().multiply(grabbedObject.matrix);
+
+                inverseWorld = world.matrix.clone().invert();
+                initialGrabbed = cursor.matrix.clone().invert().multiply(world.matrix).multiply(grabbedObject.matrix);
             }
         } else {
             grabbedObject = undefined;
+        }
+
+        if (squeezed) {
+            if (inverseHand !== undefined) {
+                let differenceHand = cursor.matrix.clone().multiply(inverseHand);
+                differenceHand.decompose(position, rotation, scale);
+                deltaFlyRotation.set(0, 0, 0, 1);
+                deltaFlyRotation.slerp(rotation.conjugate(), flySpeedRotationFactor);
+                differenceMatrix.compose(position.multiplyScalar(flySpeedTranslationFactor), deltaFlyRotation, scale);
+                world.matrix.premultiply(differenceMatrix);
+            } else {
+                inverseHand = cursor.matrix.clone().invert();
+            }
+
+
+        } else {
+            inverseHand = undefined;
         }
 
     }
