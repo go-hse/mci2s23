@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-
 let geometries = [
     new THREE.BoxGeometry(0.25, 0.25, 0.25),
     new THREE.ConeGeometry(0.1, 0.4, 64),
@@ -27,8 +26,6 @@ export function addGeometry(i, parent, x = 0, y = 0, z = 0, matrixAutoUpdate = f
     parent.add(object);
     return object;
 }
-
-
 
 export function createScene() {
     let scene = new THREE.Scene();
@@ -61,7 +58,7 @@ export function createScene() {
     world.position.z = -1;
     world.updateMatrix();
     scene.add(world);
-    boxesWithPlane(world);
+    // boxesWithPlane(world);
 
     return { scene, camera, renderer, world };
 }
@@ -109,7 +106,6 @@ export function createLine(scene) {
         line.geometry.attributes.position.needsUpdate = true;
     }
 }
-
 
 export function createArrow(parent, color = 0xff0000, size = 0.01, visible = true) {
     let shape = new THREE.Shape();

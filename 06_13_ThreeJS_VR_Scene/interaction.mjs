@@ -2,18 +2,30 @@ import * as THREE from '../99_Lib/three.module.min.js';
 import { keyboard } from './keyboard.mjs';
 import { createVRcontrollers } from './vr.mjs';
 import { createLine, createArrow } from './environment.mjs';
+import { initPhysics, boxesWithPlane, boxes2Grab } from './physics.mjs';
+
 
 function fmt(n) {
     return n % 1 === 0 ? n : n.toFixed(1);
 }
 
-export function Interaction(renderer, scene, world, cursor, objects, bill) {
+export async function Interaction(renderer, scene, world, cursor, bill) {
+    let physics = await initPhysics();
+
+    let objects = boxes2Grab(world, physics, 10);
+    boxesWithPlane(world, physics, 7);
+
 
     let position = new THREE.Vector3();
     let rotation = new THREE.Quaternion();
     let scale = new THREE.Vector3();
     let endRay = new THREE.Vector3();
     let direction = new THREE.Vector3();
+
+    let hitPoint = new THREE.Vector3(0, 1, 0);
+    let shadowHitPoint = new THREE.Vector3(0, 1, 0);
+    let localHitPoint = new THREE.Vector3(0, 1, 0);
+    let torque = new THREE.Vector3(0, 1, 0);
 
     const raycaster = new THREE.Raycaster();
 
@@ -45,9 +57,14 @@ export function Interaction(renderer, scene, world, cursor, objects, bill) {
     const lineFunc = createLine(scene);
     const flySpeedRotationFactor = 0.01;
     const flySpeedTranslationFactor = -0.02;
+    const scale_force = 100;
+    const scale_torque = 10;
+
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 4), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    world.add(marker);
 
 
-    let initialGrabbed, grabbedObject, hitObject, distance, inverseHand, inverseWorld;
+    let initialGrabbed, selectedObject, hitObject, hitDistance, inverseHand, inverseWorld, shadowObject;
     let differenceMatrix = new THREE.Matrix4();
 
     let deltaFlyRotation = new THREE.Quaternion();
@@ -91,39 +108,65 @@ export function Interaction(renderer, scene, world, cursor, objects, bill) {
         // Startpunkt des "Laserstrahls" im Cursor        
         lineFunc(0, position);
 
-        if (grabbedObject === undefined) {
-            raycaster.set(position, direction);
-            const intersects = raycaster.intersectObjects(objects);
 
-            if (intersects.length) {
+        if (shadowObject === undefined) {
+            raycaster.set(position, direction);
+            let intersects = raycaster.intersectObjects(objects);
+            if (intersects.length > 0) {
                 lineFunc(1, intersects[0].point);
                 hitObject = intersects[0].object;
-                distance = intersects[0].distance;
+                hitDistance = intersects[0].distance;
+                hitPoint.copy(intersects[0].point); // world coords
             } else {
-                // Endpunkt des "Laserstrahls": Startpunkt ist Cursor-Position, 
-                // Endpunkt berechnet aus Richtung und Startpunkt
-                endRay.addVectors(position, direction.multiplyScalar(20));
+                endRay.addVectors(cursor.position, direction.multiplyScalar(20));
                 lineFunc(1, endRay);
-                hitObject = undefined;
             }
         }
 
         if (grabbed) {
-            if (grabbedObject) {
-                endRay.addVectors(position, direction.multiplyScalar(distance));
+            if (shadowObject) {
+                endRay.addVectors(position, direction.multiplyScalar(hitDistance));
                 lineFunc(1, endRay);
-                // grabbedObject.matrix.copy(cursor.matrix.clone().multiply(initialGrabbed));
-                grabbedObject.matrix.copy(inverseWorld.clone().multiply(cursor.matrix).multiply(initialGrabbed));
+                shadowObject.matrix.copy(inverseWorld.clone().multiply(cursor.matrix).multiply(initialGrabbed));
 
+                // calc touch hit point for selected and shadow
+                shadowHitPoint.copy(localHitPoint).applyMatrix4(shadowObject.matrix);
+                hitPoint.copy(localHitPoint).applyMatrix4(selectedObject.matrix);
+
+                // visualise the two points
+                marker.position.copy(hitPoint);
+
+                // force: direction between points and distance
+                let globalForce = shadowHitPoint.clone().sub(hitPoint);
+
+                // calc the grab point relative to center of gravity
+                selectedObject.matrix.decompose(position, rotation, scale);
+                let relativeGrabPoint = hitPoint.clone().sub(position);
+
+                // torque as cross between relativeGrabPoint and force
+                torque.copy(relativeGrabPoint).cross(globalForce).multiplyScalar(scale_torque);
+                physics.applyForceTorque(selectedObject.physicalBody, globalForce.multiplyScalar(scale_force), torque);
             } else if (hitObject) {
-                grabbedObject = hitObject;
-                // initialGrabbed = cursor.matrix.clone().invert().multiply(grabbedObject.matrix);
-
+                selectedObject = hitObject;
                 inverseWorld = world.matrix.clone().invert();
-                initialGrabbed = cursor.matrix.clone().invert().multiply(world.matrix).multiply(grabbedObject.matrix);
+
+                shadowObject = hitObject.clone();
+                localHitPoint.copy(hitPoint.clone().applyMatrix4(shadowObject.matrixWorld.clone().invert()));
+
+                shadowObject.material = hitObject.material.clone();
+                shadowObject.material.transparent = true;
+                shadowObject.material.opacity = 0.6;
+                shadowObject.material.needsUpdate = true;
+
+                hitObject.parent.add(shadowObject);
+
+                initialGrabbed = cursor.matrix.clone().invert().multiply(world.matrix).multiply(shadowObject.matrix);
             }
         } else {
-            grabbedObject = undefined;
+            if (shadowObject !== undefined) {
+                shadowObject.removeFromParent();
+                shadowObject = undefined;
+            }
         }
 
         if (squeezed) {
