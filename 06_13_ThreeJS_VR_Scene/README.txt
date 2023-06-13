@@ -22,16 +22,42 @@ z.B. mit scrcpy https://github.com/Genymobile/scrcpy
 
 
 * im Terminal (ohne Hash)
-# adb start-server
-# adb devices
+```adb start-server```
+```adb devices```
 
 * im Terminal, wenn 1 Gerät angezeigt wird. Verbindet VS-Code-Web-Server auf Port 8080 s.o. mit Quest:
 
-## adb reverse REMOTE LOCAL
-## REMOTE: Quest; LOCAL: PC
 
-# adb reverse tcp:3000 tcp:8080
+```adb reverse REMOTE LOCAL```
+REMOTE: Quest; LOCAL: PC
 
+```adb reverse tcp:3000 tcp:8080```
+
+
+ODER: Verbindung über WLAN
+- Voraussetzung: Quest und PC im selben WLAN
+
+- IP Addresse erhalten (steht in der Ausgabe hinter wlan0/inet)
+- Alternativ: in der Quest über WLAN-Einstellungen
+# adb shell ip addr
+
+- ADB über TCP starten
+```adb tcpip 5555```
+
+- ADB Verbindung herstellen (Ihre IP eintragen)
+``` adb connect  192.168.39.81:5555 ```
+
+- danach wieder
+```
+adb reverse tcp:3000 tcp:8080
+```
+
+
+zurück zu USB
+```
+adb kill-server
+adb usb
+```
 
 3. im Quest-Browser:
 
